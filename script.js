@@ -80,7 +80,7 @@ class Particle {
 
     update() {
         if (isExplodingOut) {
-            this.opacity -= 0.015; // Fade out suave
+            this.opacity -= 0.015;
         }
 
         if (mouse.active && !isExplodingOut) {
@@ -118,29 +118,53 @@ function animate() {
     requestAnimationFrame(animate);
 }
 
-// LOGICA DO CLIQUE NO BOTÃO
+// LOGICA DO CLIQUE/TOQUE NO BOTÃO
 linkElement.addEventListener('click', function(e) {
-    e.preventDefault(); // Impede a navegação imediata
+    e.preventDefault();
     const targetUrl = this.href;
-    
     isExplodingOut = true;
-    this.classList.add('clicked'); // Faz o botão sumir no CSS
-    
-    // Explode as partículas com força extra
+    this.classList.add('clicked');
     particles.forEach(p => p.scramble(2.5));
-
-    // Navega após a animação (800ms)
     setTimeout(() => {
         window.location.href = targetUrl;
     }, 800);
 });
 
+// EVENTOS DE MOUSE
 window.addEventListener('mousemove', (e) => {
     mouse.x = e.clientX;
     mouse.y = e.clientY;
     mouse.active = true;
 });
 
+window.addEventListener('mouseout', () => {
+    mouse.active = false;
+});
+
+// --- AJUSTE PARA CELULAR (TOUCH) ---
+window.addEventListener('touchstart', (e) => {
+    // Se o toque for fora do link, ativa as partículas
+    if (e.target !== linkElement) {
+        mouse.active = true;
+        mouse.x = e.touches[0].clientX;
+        mouse.y = e.touches[0].clientY;
+        // Bagunça as partículas levemente no toque inicial
+        if (!isExplodingOut) particles.forEach(p => p.scramble(0.5));
+    }
+}, {passive: true});
+
+window.addEventListener('touchmove', (e) => {
+    if (mouse.active) {
+        mouse.x = e.touches[0].clientX;
+        mouse.y = e.touches[0].clientY;
+    }
+}, {passive: true});
+
+window.addEventListener('touchend', () => {
+    mouse.active = false;
+});
+
+// Bagunça no clique geral (Desktop)
 window.addEventListener('click', (e) => {
     if (e.target !== linkElement && !isExplodingOut) {
         particles.forEach(p => p.scramble());
