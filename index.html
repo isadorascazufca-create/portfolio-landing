@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Isadora Scazufca | Portfolio</title>
+    <style>
+        /* Reseta as margens e garante que nada transborde */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            font-family: sans-serif;
+        }
+
+        /* Camada 1: O seu site da Adobe ao fundo */
+        #portfolio-frame {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            z-index: 1;
+        }
+
+        /* Camada 2: A máscara de pixels amarelos na frente */
+        #pixelCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            cursor: crosshair;
+        }
+
+        /* Pequeno aviso opcional para o usuário entender a interação */
+        #instrucao {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+            color: #000;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            pointer-events: none; /* Não atrapalha o mouse */
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+    <iframe id="portfolio-frame" src="https://oiisadorascazufca.myportfolio.com/work"></iframe>
+
+    <canvas id="pixelCanvas"></canvas>
+
+    
+
+    <script>
+        const canvas = document.getElementById('pixelCanvas');
+        const ctx = canvas.getContext('2d');
+        const instrucao = document.getElementById('instrucao');
+        
+        // --- CONFIGURAÇÕES CUSTOMIZÁVEIS ---
+        const cellSize = 70;          // Tamanho dos quadrados (pixels)
+        const pixelColor = '#FAC600';  // Seu Amarelo Hexadecimal
+        // -----------------------------------
+
+        let pixels = [];
+        let animando = true;
+
+        // Inicializa o grid de pixels baseado no tamanho da tela
+        function init() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const cols = Math.ceil(canvas.width / cellSize);
+            const rows = Math.ceil(canvas.height / cellSize);
+
+            pixels = [];
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    pixels.push({
+                        x: x * cellSize,
+                        y: y * cellSize,
+                        alive: true
+                    });
+                }
+            }
+            draw();
+        }
+
+        // Desenha apenas os pixels que ainda estão "vivos"
+        function draw() {
+            if (!animando) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = pixelColor;
+            pixels.forEach(p => {
+                if (p.alive) {
+                    ctx.fillRect(p.x, p.y, cellSize, cellSize);
+                }
+            });
+        }
+
+        // Detecta o movimento e "mata" o pixel sob o mouse
+        function handleMove(e) {
+            if (!animando) return;
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            let mudou = false;
+            pixels.forEach(p => {
+                if (p.alive && 
+                    mouseX > p.x && mouseX < p.x + cellSize &&
+                    mouseY > p.y && mouseY < p.y + cellSize) {
+                    p.alive = false;
+                    mudou = true;
+                }
+            });
+            if (mudou) draw();
+        }
+
+        // Função que limpa tudo e libera o site de baixo
+        function revelarSite() {
+            animando = false;
+            // Efeito visual de desaparecimento suave
+            canvas.style.transition = 'opacity 0.8s ease, visibility 0.8s';
+            canvas.style.opacity = '0';
+            canvas.style.pointerEvents = 'none'; // Libera cliques no iframe
+            if(instrucao) instrucao.style.display = 'none';
+            
+            // Remove o canvas do DOM após a transição para otimizar
+            setTimeout(() => canvas.remove(), 800);
+        }
+
+        // LISTENERS (Mouse, Toque e Clique)
+        window.addEventListener('mousemove', handleMove);
+        
+        window.addEventListener('touchmove', (e) => {
+            handleMove(e.touches[0]);
+        }, { passive: true });
+
+        // Ao clicar, o site é totalmente revelado
+        window.addEventListener('click', revelarSite);
+
+        // Reajusta o tamanho se a janela mudar
+        window.addEventListener('resize', init);
+
+        // Início
+        init();
+    </script>
+</body>
+</html>
