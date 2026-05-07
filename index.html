@@ -11,7 +11,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #FAC600; /* Seu amarelo hex */
+            background-color: #FAC600; /* Seu amarelo exato */
         }
 
         #portfolio-frame {
@@ -21,8 +21,7 @@
             width: 100%;
             height: 100%;
             border: none;
-            /* Começa na camada 1 */
-            z-index: 1; 
+            z-index: 1; /* Começa atrás */
             display: block;
         }
 
@@ -32,13 +31,11 @@
             left: 0;
             width: 100%;
             height: 100%;
-            /* Começa na frente de tudo */
-            z-index: 999; 
+            z-index: 999; /* Fica na frente */
             cursor: crosshair;
-            transition: opacity 0.5s ease;
         }
 
-        /* Classe que será aplicada ao iframe após o clique */
+        /* Classe para trazer o site para a frente de tudo */
         .site-ativo {
             z-index: 1000 !important;
         }
@@ -60,7 +57,7 @@
         const ctx = canvas.getContext('2d');
         const frame = document.getElementById('portfolio-frame');
         
-        const cellSize = 80; // Quadrados grandes como você pediu
+        const cellSize = 80; // Pixels grandes
         const pixelColor = '#FAC600';
         let pixels = [];
         let ativo = true;
@@ -107,24 +104,22 @@
             if (!ativo) return;
             ativo = false;
             
-            // 1. Faz o canvas sumir
-            canvas.style.opacity = '0';
+            // 1. Remove o canvas IMEDIATAMENTE do código
+            // Sem espera, sem fade-out, deleta na hora do clique
+            canvas.remove();
 
-            // 2. A MÁGICA: Joga o site para a frente de tudo (z-index 1000)
+            // 2. Traz o iframe para o plano principal
             frame.classList.add('site-ativo');
             
-            // 3. Remove o canvas de vez para não ter erro
-            setTimeout(() => {
-                canvas.remove();
-                frame.focus();
-            }, 550);
+            // 3. Força o foco no site para que o próximo clique seja direto nele
+            frame.focus();
         }
 
         window.addEventListener('mousemove', handleMove);
         window.addEventListener('touchmove', (e) => handleMove(e.touches[0]), { passive: true });
         
-        // O clique que libera o site
-        window.addEventListener('click', revelarSite);
+        // Listener de clique para destruição imediata da camada amarela
+        window.addEventListener('mousedown', revelarSite); // mousedown é mais rápido que click
         window.addEventListener('resize', init);
 
         init();
