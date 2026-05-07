@@ -11,17 +11,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #FAC600; /* Cor do seu estúdio Tuim */
-        }
-
-        #portfolio-frame {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-            z-index: 5; /* O site fica no meio */
+            background-color: #FAC600; /* Amarelo Tuim */
         }
 
         #pixelCanvas {
@@ -30,37 +20,36 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 10; /* A máscara começa na frente */
+            z-index: 10;
             cursor: crosshair;
         }
 
-        /* Esta classe é o segredo: ela torna o canvas invisível para o mouse */
-        .pass-through {
-            pointer-events: none !important;
-            display: none !important;
+        /* O site fica ao fundo apenas para a "espiada" inicial */
+        #portfolio-preview {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            z-index: 1;
+            pointer-events: none; /* Bloqueia interação para forçar o redirecionamento */
         }
     </style>
 </head>
 <body>
 
-    <iframe 
-        id="portfolio-frame" 
-        src="https://oiisadorascazufca.myportfolio.com/work"
-        sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation allow-top-navigation-by-user-activation"
-        allow="autoplay; encrypted-media; fullscreen">
-    </iframe>
-
+    <iframe id="portfolio-preview" src="https://oiisadorascazufca.myportfolio.com/work"></iframe>
     <canvas id="pixelCanvas"></canvas>
 
     <script>
         const canvas = document.getElementById('pixelCanvas');
         const ctx = canvas.getContext('2d');
-        const frame = document.getElementById('portfolio-frame');
+        const targetURL = "https://oiisadorascazufca.myportfolio.com/work";
         
         const cellSize = 80; 
         const pixelColor = '#FAC600';
         let pixels = [];
-        let ativo = true;
 
         function init() {
             canvas.width = window.innerWidth;
@@ -77,7 +66,6 @@
         }
 
         function draw() {
-            if (!ativo) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = pixelColor;
             pixels.forEach(p => {
@@ -86,7 +74,6 @@
         }
 
         function handleMove(e) {
-            if (!ativo) return;
             const rect = canvas.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
@@ -100,26 +87,17 @@
             if (mudou) draw();
         }
 
-        // Nova lógica de revelação
-        function revelarSite(e) {
-            if (!ativo) return;
-            
-            // Torna o canvas "transparente" para cliques no exato momento do toque
-            canvas.classList.add('pass-through');
-            ativo = false;
-
-            // Remove o canvas do sistema
-            setTimeout(() => {
-                canvas.remove();
-            }, 10);
+        // A SOLUÇÃO: Redireciona a página para "libertar" o site do iframe
+        function entrarNoSite() {
+            window.top.location.href = targetURL;
         }
 
         window.addEventListener('mousemove', handleMove);
         window.addEventListener('touchmove', (e) => handleMove(e.touches[0]), { passive: true });
         
-        // Usamos mousedown e pointerdown para máxima velocidade
-        window.addEventListener('mousedown', revelarSite);
-        window.addEventListener('pointerdown', revelarSite);
+        // Qualquer clique (ou toque) leva o usuário para o site real
+        window.addEventListener('mousedown', entrarNoSite);
+        window.addEventListener('touchstart', entrarNoSite);
         window.addEventListener('resize', init);
 
         init();
