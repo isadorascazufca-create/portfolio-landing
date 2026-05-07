@@ -5,18 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Isadora Scazufca | Portfolio</title>
     <style>
-        /* Reseta as margens e garante que nada transborde */
         body, html {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #000;
-            font-family: sans-serif;
+            background-color: #FAC600; /* Fundo amarelo enquanto carrega */
         }
 
-        /* Camada 1: O seu site da Adobe ao fundo */
         #portfolio-frame {
             position: absolute;
             top: 0;
@@ -24,34 +21,41 @@
             width: 100%;
             height: 100%;
             border: none;
-            z-index: 1;
+            z-index: 1; /* O site fica na camada 1 */
+            display: block;
         }
 
-        /* Camada 2: A máscara de pixels amarelos na frente */
         #pixelCanvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 2;
+            z-index: 10; /* A máscara fica bem na frente (camada 10) */
             cursor: crosshair;
+            transition: opacity 0.6s ease;
         }
 
-        /* Pequeno aviso opcional para o usuário entender a interação */
         #instrucao {
             position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 3;
+            z-index: 11;
             color: #000;
-            background: rgba(255, 255, 255, 0.5);
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 12px;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 13px;
             pointer-events: none;
-            opacity: 0.8;
+            font-family: sans-serif;
+        }
+        
+        /* Classe para sumir com tudo que estiver na frente */
+        .hidden {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            display: none !important;
         }
     </style>
 </head>
@@ -61,11 +65,11 @@
         id="portfolio-frame" 
         src="https://oiisadorascazufca.myportfolio.com/work"
         sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation allow-top-navigation-by-user-activation"
-        allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb">
+        allow="autoplay; encrypted-media; fullscreen">
     </iframe>
 
     <canvas id="pixelCanvas"></canvas>
-
+    <div id="instrucao">Passe o mouse para descobrir ou clique para entrar</div>
 
     <script>
         const canvas = document.getElementById('pixelCanvas');
@@ -73,53 +77,42 @@
         const frame = document.getElementById('portfolio-frame');
         const instrucao = document.getElementById('instrucao');
         
-        const cellSize = 70;
+        const cellSize = 80; 
         const pixelColor = '#FAC600';
-
         let pixels = [];
-        let animando = true;
+        let ativo = true;
 
         function init() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             const cols = Math.ceil(canvas.width / cellSize);
             const rows = Math.ceil(canvas.height / cellSize);
-
             pixels = [];
             for (let y = 0; y < rows; y++) {
                 for (let x = 0; x < cols; x++) {
-                    pixels.push({
-                        x: x * cellSize,
-                        y: y * cellSize,
-                        alive: true
-                    });
+                    pixels.push({ x: x * cellSize, y: y * cellSize, alive: true });
                 }
             }
             draw();
         }
 
         function draw() {
-            if (!animando) return;
+            if (!ativo) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = pixelColor;
             pixels.forEach(p => {
-                if (p.alive) {
-                    ctx.fillRect(p.x, p.y, cellSize, cellSize);
-                }
+                if (p.alive) ctx.fillRect(p.x, p.y, cellSize, cellSize);
             });
         }
 
         function handleMove(e) {
-            if (!animando) return;
+            if (!ativo) return;
             const rect = canvas.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
-
             let mudou = false;
             pixels.forEach(p => {
-                if (p.alive && 
-                    mouseX > p.x && mouseX < p.x + cellSize &&
-                    mouseY > p.y && mouseY < p.y + cellSize) {
+                if (p.alive && mouseX > p.x && mouseX < p.x + cellSize && mouseY > p.y && mouseY < p.y + cellSize) {
                     p.alive = false;
                     mudou = true;
                 }
@@ -127,26 +120,30 @@
             if (mudou) draw();
         }
 
+        // A MUDANÇA CRÍTICA ESTÁ AQUI
         function revelarSite() {
-            if (!animando) return;
-            animando = false;
+            if (!ativo) return;
+            ativo = false;
             
-            canvas.style.transition = 'opacity 0.8s ease, visibility 0.8s';
+            // 1. Faz o canvas sumir visualmente
             canvas.style.opacity = '0';
-            canvas.style.pointerEvents = 'none';
-            if(instrucao) instrucao.style.display = 'none';
-            
-            // Dá foco ao iframe para garantir que o próximo clique funcione imediatamente
-            frame.focus();
+            if(instrucao) instrucao.style.opacity = '0';
 
-            setTimeout(() => canvas.remove(), 800);
+            // 2. DELETA o canvas e a instrução do código após a animação
+            // Isso garante que não sobre NADA na frente do seu site
+            setTimeout(() => {
+                canvas.classList.add('hidden');
+                if(instrucao) instrucao.classList.add('hidden');
+                canvas.remove();
+                if(instrucao) instrucao.remove();
+                
+                // 3. Força o foco no site da Adobe
+                frame.focus();
+            }, 600);
         }
 
         window.addEventListener('mousemove', handleMove);
-        window.addEventListener('touchmove', (e) => {
-            handleMove(e.touches[0]);
-        }, { passive: true });
-
+        window.addEventListener('touchmove', (e) => handleMove(e.touches[0]), { passive: true });
         window.addEventListener('click', revelarSite);
         window.addEventListener('resize', init);
 
