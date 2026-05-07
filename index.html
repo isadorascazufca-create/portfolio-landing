@@ -57,11 +57,14 @@
 </head>
 <body>
 
-    <iframe id="portfolio-frame" src="https://oiisadorascazufca.myportfolio.com/work"></iframe>
+    <iframe 
+        id="portfolio-frame" 
+        src="https://oiisadorascazufca.myportfolio.com/work"
+        sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation"
+        allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb">
+    </iframe>
 
     <canvas id="pixelCanvas"></canvas>
-
-    
 
     <script>
         const canvas = document.getElementById('pixelCanvas');
