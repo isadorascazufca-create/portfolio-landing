@@ -11,7 +11,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #FAC600; /* Seu amarelo exato */
+            background-color: #FAC600; /* Cor do seu estúdio Tuim */
         }
 
         #portfolio-frame {
@@ -21,8 +21,7 @@
             width: 100%;
             height: 100%;
             border: none;
-            z-index: 1; /* Começa atrás */
-            display: block;
+            z-index: 5; /* O site fica no meio */
         }
 
         #pixelCanvas {
@@ -31,13 +30,14 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 999; /* Fica na frente */
+            z-index: 10; /* A máscara começa na frente */
             cursor: crosshair;
         }
 
-        /* Classe para trazer o site para a frente de tudo */
-        .site-ativo {
-            z-index: 1000 !important;
+        /* Esta classe é o segredo: ela torna o canvas invisível para o mouse */
+        .pass-through {
+            pointer-events: none !important;
+            display: none !important;
         }
     </style>
 </head>
@@ -57,7 +57,7 @@
         const ctx = canvas.getContext('2d');
         const frame = document.getElementById('portfolio-frame');
         
-        const cellSize = 80; // Pixels grandes
+        const cellSize = 80; 
         const pixelColor = '#FAC600';
         let pixels = [];
         let ativo = true;
@@ -100,26 +100,26 @@
             if (mudou) draw();
         }
 
-        function revelarSite() {
+        // Nova lógica de revelação
+        function revelarSite(e) {
             if (!ativo) return;
+            
+            // Torna o canvas "transparente" para cliques no exato momento do toque
+            canvas.classList.add('pass-through');
             ativo = false;
-            
-            // 1. Remove o canvas IMEDIATAMENTE do código
-            // Sem espera, sem fade-out, deleta na hora do clique
-            canvas.remove();
 
-            // 2. Traz o iframe para o plano principal
-            frame.classList.add('site-ativo');
-            
-            // 3. Força o foco no site para que o próximo clique seja direto nele
-            frame.focus();
+            // Remove o canvas do sistema
+            setTimeout(() => {
+                canvas.remove();
+            }, 10);
         }
 
         window.addEventListener('mousemove', handleMove);
         window.addEventListener('touchmove', (e) => handleMove(e.touches[0]), { passive: true });
         
-        // Listener de clique para destruição imediata da camada amarela
-        window.addEventListener('mousedown', revelarSite); // mousedown é mais rápido que click
+        // Usamos mousedown e pointerdown para máxima velocidade
+        window.addEventListener('mousedown', revelarSite);
+        window.addEventListener('pointerdown', revelarSite);
         window.addEventListener('resize', init);
 
         init();
